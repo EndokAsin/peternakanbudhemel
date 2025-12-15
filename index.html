@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peternakan Budhe Melinda</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Font Awesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        .custom-scroll::-webkit-scrollbar { height: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center h-auto md:h-16 py-3 md:py-0 gap-4">
+                <div class="flex items-center gap-3 flex-shrink-0 w-full md:w-auto">
+                    <i class="fa-solid fa-cow text-green-600 text-2xl"></i>
+                    <h1 class="text-xl font-bold text-slate-800 tracking-tight">Peternakan Budhe Melinda</h1>
+                </div>
+
+                <!-- Submenu Tabs -->
+                <div class="flex bg-slate-100 p-1 rounded-lg overflow-x-auto w-full md:w-auto scrollbar-hide">
+                    <button onclick="switchType('Paper')" id="tab-Paper" class="px-4 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap">
+                        <i class="fa-solid fa-file-lines mr-2"></i>Paper
+                    </button>
+                    <button onclick="switchType('Buku')" id="tab-Buku" class="px-4 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap">
+                        <i class="fa-solid fa-book mr-2"></i>Buku
+                    </button>
+                    <button onclick="switchType('Proposal')" id="tab-Proposal" class="px-4 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap">
+                        <i class="fa-solid fa-file-invoice-dollar mr-2"></i>Proposal
+                    </button>
+                    <!-- Menu Referensi -->
+                    <button onclick="switchType('Referensi')" id="tab-Referensi" class="px-4 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap text-slate-500 hover:text-slate-700">
+                        <i class="fa-solid fa-book-bookmark mr-2"></i>Referensi
+                    </button>
+                </div>
+
+                <!-- Search -->
+                <div class="flex-1 max-w-sm w-full">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-search text-slate-400"></i>
+                        </div>
+                        <input type="text" id="searchInput" class="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-full bg-slate-50 focus:bg-white focus:border-green-500 focus:ring-1 focus:ring-green-500 sm:text-sm transition" placeholder="Cari judul/penulis...">
+                    </div>
+                </div>
+
+                <!-- Add Button -->
+                <div class="flex items-center flex-shrink-0 w-full md:w-auto justify-end">
+                    <button onclick="openModal(); event.stopPropagation()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-lg shadow-green-500/30 flex items-center gap-2 whitespace-nowrap w-full md:w-auto justify-center">
+                        <i class="fa-solid fa-plus"></i> <span id="addBtnText">Tambah Paper</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-[95%] mx-auto py-8">
+        
+        <!-- Toolbar -->
+        <div class="flex flex-col xl:flex-row justify-between items-center mb-4 gap-4">
+            <div class="flex flex-col sm:flex-row items-center gap-2 w-full xl:w-auto flex-wrap">
+                <!-- Status Filter -->
+                <div class="relative w-full sm:w-40 lg:w-48">
+                    <select id="statusFilter" class="block w-full pl-3 pr-10 py-2 text-base border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500 sm:text-sm shadow-sm cursor-pointer">
+                        <option value="all">Semua Status</option>
+                        <option value="Belum Diapapakan">Belum Diapapakan</option>
+                        <option value="Sedang Dikerjakan">Sedang Dikerjakan</option>
+                        <option value="Sudah Submit">Sudah Submit</option>
+                        <option value="Accepted">Accepted</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
+
+                <!-- Target/Jenis Filter -->
+                <div class="relative w-full sm:w-40 lg:w-48">
+                    <select id="targetFilter" class="block w-full pl-3 pr-10 py-2 text-base border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500 sm:text-sm shadow-sm cursor-pointer">
+                        <option value="all">Semua Target</option>
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="relative w-full sm:w-40 lg:w-48">
+                    <select id="categoryFilter" class="block w-full pl-3 pr-10 py-2 text-base border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500 sm:text-sm shadow-sm cursor-pointer">
+                        <option value="all">Semua Kategori</option>
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <!-- Sort Option -->
+                <div class="relative w-full sm:w-40 lg:w-48">
+                    <select id="sortOption" class="block w-full pl-3 pr-10 py-2 text-base border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500 sm:text-sm shadow-sm cursor-pointer">
+                        <option value="deadline_asc">Deadline (Terdekat)</option>
+                        <option value="deadline_desc">Deadline (Terlama)</option>
+                        <option value="title_asc">Judul (A-Z)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="text-sm text-slate-500 whitespace-nowrap ml-auto">
+                Menampilkan <span id="currentTypeLabel" class="font-bold">Paper</span>: <span id="totalCount" class="font-semibold text-slate-700">0</span> item
+            </div>
+        </div>
+        
+        <!-- Loading -->
+        <div id="loading" class="text-center py-20 hidden">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-green-500"></i>
+            <p class="mt-4 text-slate-500">Memuat data ternak...</p>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
+            <div class="overflow-x-auto custom-scroll pb-4">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 min-w-[100px]">Deadline/Tahun</th>
+                            <th scope="col" class="px-4 py-3 min-w-[150px]">Penulis</th>
+                            <th scope="col" class="px-4 py-3 min-w-[250px]" id="headerJudul">Judul Paper</th>
+                            <th scope="col" class="px-4 py-3 min-w-[150px]">Status</th>
+                            <th scope="col" class="px-4 py-3 min-w-[150px]" id="headerTarget">Target Jurnal</th>
+                            <th scope="col" class="px-4 py-3 min-w-[150px]">File/Links</th>
+                            <th scope="col" class="px-4 py-3 min-w-[100px]">Biaya</th>
+                            <th scope="col" class="px-4 py-3 min-w-[200px]">Catatan</th>
+                            <th scope="col" class="px-4 py-3 min-w-[100px] text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paperTableBody" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+            
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-16 text-center">
+                <div class="bg-slate-100 p-4 rounded-full mb-4">
+                    <i class="fa-solid fa-cow text-3xl text-slate-400"></i>
+                </div>
+                <h3 class="text-lg font-medium text-slate-900" id="emptyStateTitle">Belum ada data</h3>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Form -->
+    <div id="paperModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                    
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-slate-100">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold leading-6 text-slate-900" id="modalTitle">Tambah Data Baru</h3>
+                            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-500">
+                                <i class="fa-solid fa-xmark text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <form id="paperForm" class="p-6">
+                        <input type="hidden" id="paperId">
+                        <input type="hidden" id="jenisInput">
+                        <!-- Menyimpan URL file yang sudah diupload -->
+                        <input type="hidden" id="existingFileUrl"> 
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Kolom Kiri -->
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1" id="labelJudul">Judul *</label>
+                                    <input type="text" id="judul" required class="w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border p-2">
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Deadline / Tahun</label>
+                                        <input type="date" id="deadline" class="w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border p-2">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Status</label>
+                                        <select id="status" class="w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border p-2">
+                                            <option value="Belum Diapapakan">Pending / Tersedia</option>
+                                            <option value="Sedang Dikerjakan">Sedang Dibaca / Dikerjakan</option>
+                                            <option value="Sudah Submit">Selesai / Submit</option>
+                                            <option value="Accepted">Accepted</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1" id="labelTarget">Target</label>
+                                    <input type="text" id="target_jurnal" list="referenceTypes" class="w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border p-2" autocomplete="off">
+                                    <datalist id="referenceTypes">
+                                        <option value="Buku">
+                                        <option value="Jurnal">
+                                        <option value="Website">
+                                        <option value="Prosiding">
+                                        <option value="Laporan">
+                                    </datalist>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Penulis</label>
+                                    <input type="text" id="penulis" class="w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border p-2">
+                                </div>
+                            </div>
+
+                            <!-- Kolom Kanan -->
+                            <div class="space-y-4">
+                                <!-- Area Upload File -->
+                                <div id="uploadSection" class="p-3 bg-green-50 rounded-lg border border-green-100">
+                                    <label class="block text-xs font-bold text-green-800 mb-1">
+                                        <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Upload File (PDF/Gambar)
+                                    </label>
+                                    <input type="file" id="fileUpload" accept=".pdf,.doc,.docx,.jpg,.png" class="block w-full text-xs text-slate-500
+                                      file:mr-4 file:py-2 file:px-4
+                                      file:rounded-full file:border-0
+                                      file:text-xs file:font-semibold
+                                      file:bg-green-100 file:text-green-700
+                                      hover:file:bg-green-200
+                                    "/>
+                                    <p class="text-[10px] text-green-600 mt-1">*File akan disimpan di Storage dan link otomatis masuk ke "Link Referensi".</p>
+                                    <div id="filePreviewLink" class="hidden mt-2 text-xs">
+                                        File saat ini: <a href="#" target="_blank" class="text-green-600 underline truncate block">Lihat File</a>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Link Referensi (Utama)</label>
+                                        <input type="url" id="link_referensi" placeholder="Link Referensi/Drive/Web" class="w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border p-2 text-xs">
+                                    </div>
+                                    
+                                    <!-- SECTION LINK TAMBAHAN KHUSUS PAPER (Overleaf, PPT, Submission) -->
+                                    <div id="paperLinksSection" class="space-y-2 hidden border-t border-slate-100 pt-2">
+                                        <label class="block text-xs font-bold text-slate-600">Tautan Tambahan (Paper)</label>
+                                        <input type="url" id="link_overleaf" placeholder="Link Overleaf" class="w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border p-2 text-xs">
+                                        <input type="url" id="link_ppt" placeholder="Link PPT/Canva/Design" class="w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border p-2 text-xs">
+                                        <input type="url" id="link_submission" placeholder="Link Submission" class="w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border p-2 text-xs">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Biaya (Opsional)</label>
+                                        <input type="text" id="biaya" placeholder="$0.00" class="w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border p-2">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1" id="labelKategori">Kategori / Topik</label>
+                                        <input type="text" id="kategori" placeholder="e.g. Quantum" class="w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border p-2">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Catatan</label>
+                                    <textarea id="catatan" rows="1" class="w-full rounded-md border-slate-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm border p-2"></textarea>
+                                </div>
+                                
+                                <div class="hidden">
+                                    <input type="text" id="mapping">
+                                    <input type="text" id="consensus">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex justify-end gap-3">
+                            <button type="button" onclick="closeModal()" class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none">Batal</button>
+                            <button type="submit" id="saveBtn" class="rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 transition-transform duration-300 z-50">
+        <div class="bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3">
+            <i class="fa-solid fa-circle-check text-green-400"></i>
+            <span id="toastMessage">Berhasil disimpan</span>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. CONFIGURATION (UPDATED FOR PETERNAKAN BUDHE MELINDA) ---
+        const SUPABASE_URL = 'https://gqtcynwieyzckkrqwbda.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_CRT1CH3mQJCgfW8xf7uKRw_qT9jxlVT';
+        
+        const { createClient } = supabase;
+        const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Nama Bucket di Supabase Storage
+        const STORAGE_BUCKET = 'files'; 
+
+        // --- 2. STATE ---
+        let papers = [];
+        let currentType = 'Paper'; 
+        let currentFilterStatus = 'all';
+        let currentFilterTarget = 'all'; 
+        let currentFilterCategory = 'all';
+        let currentSortOption = 'deadline_asc';
+        let currentSearchTerm = '';
+
+        // --- 3. DOM ELEMENTS ---
+        const tableBody = document.getElementById('paperTableBody');
+        const loadingEl = document.getElementById('loading');
+        const emptyStateEl = document.getElementById('emptyState');
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const targetFilter = document.getElementById('targetFilter'); 
+        const categoryFilter = document.getElementById('categoryFilter');
+        const sortOption = document.getElementById('sortOption');
+        const totalCountEl = document.getElementById('totalCount');
+        const currentTypeLabel = document.getElementById('currentTypeLabel');
+        const addBtnText = document.getElementById('addBtnText');
+        const headerJudul = document.getElementById('headerJudul');
+        const headerTarget = document.getElementById('headerTarget');
+        const modal = document.getElementById('paperModal');
+        const form = document.getElementById('paperForm');
+        const fileUpload = document.getElementById('fileUpload');
+        const filePreviewLink = document.getElementById('filePreviewLink');
+        const existingFileUrl = document.getElementById('existingFileUrl');
+        const paperLinksSection = document.getElementById('paperLinksSection');
+
+        // --- 4. SUBMENU LOGIC ---
+        function switchType(type) {
+            currentType = type;
+            
+            // Tab Styling
+            ['Paper', 'Buku', 'Proposal', 'Referensi'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === type) {
+                    btn.className = "px-4 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap bg-white text-green-600 shadow-sm ring-1 ring-slate-200";
+                } else {
+                    btn.className = "px-4 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-700 transition-all whitespace-nowrap hover:bg-slate-50";
+                }
+            });
+
+            currentTypeLabel.textContent = type;
+            addBtnText.textContent = `Tambah ${type}`;
+            
+            // UI Tweaks per Type
+            let defaultTargetLabel = "Semua Target";
+            if (type === 'Buku') {
+                headerJudul.textContent = 'Judul Buku';
+                headerTarget.textContent = 'Penerbit';
+                defaultTargetLabel = "Semua Penerbit";
+            } else if (type === 'Proposal') {
+                headerJudul.textContent = 'Judul Proposal';
+                headerTarget.textContent = 'Skema / Hibah';
+                defaultTargetLabel = "Semua Skema";
+            } else if (type === 'Referensi') {
+                headerJudul.textContent = 'Judul Referensi';
+                headerTarget.textContent = 'Jenis (Jurnal/Web)';
+                defaultTargetLabel = "Semua Jenis";
+            } else {
+                headerJudul.textContent = 'Judul Paper';
+                headerTarget.textContent = 'Target Jurnal';
+            }
+            
+            // Update default option text for filters
+            targetFilter.options[0].text = defaultTargetLabel;
+
+            fetchPapers();
+        }
+
+        // --- 5. HELPER FUNCTIONS ---
+        function getStatusBadge(status) {
+            const s = (status || '').toLowerCase();
+            let classes = 'bg-slate-100 text-slate-600 border border-slate-200';
+            let icon = '<i class="fa-regular fa-clock mr-1"></i>';
+
+            if (s.includes('sedang')) { classes = 'bg-blue-50 text-blue-700 border border-blue-200'; icon = '<i class="fa-solid fa-pencil mr-1"></i>'; }
+            else if (s.includes('sudah') || s.includes('selesai')) { classes = 'bg-lime-100 text-lime-800 border border-lime-300'; icon = '<i class="fa-solid fa-check mr-1"></i>'; }
+            else if (s.includes('accepted')) { classes = 'bg-green-600 text-white border border-green-700 shadow-sm'; icon = '<i class="fa-solid fa-check-double mr-1"></i>'; }
+            else if (s.includes('rejected')) { classes = 'bg-red-50 text-red-700 border border-red-200'; icon = '<i class="fa-solid fa-xmark mr-1"></i>'; }
+
+            return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${classes}">${icon}${status || '-'}</span>`;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            return new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        // --- 6. CORE LOGIC ---
+        async function fetchPapers() {
+            loadingEl.classList.remove('hidden');
+            tableBody.innerHTML = '';
+            emptyStateEl.classList.add('hidden');
+
+            const { data, error } = await db
+                .from('papers')
+                .select('*')
+                .eq('jenis', currentType)
+                .order('deadline', { ascending: true });
+
+            loadingEl.classList.add('hidden');
+
+            if (error) {
+                console.error(error);
+                showToast('Gagal mengambil data. Cek koneksi Supabase.', 'error');
+                return;
+            }
+
+            papers = data || [];
+            
+            // Populate dynamic filters
+            populateCategoryFilter();
+            populateTargetFilter(); 
+            
+            applyFiltersAndSort();
+        }
+
+        function renderTable(dataToRender) {
+            tableBody.innerHTML = '';
+            totalCountEl.textContent = dataToRender.length;
+
+            if (dataToRender.length === 0) {
+                emptyStateEl.classList.remove('hidden');
+                document.getElementById('emptyStateTitle').textContent = papers.length === 0 ? `Belum ada data ${currentType}` : 'Tidak ditemukan';
+                return;
+            }
+
+            dataToRender.forEach(paper => {
+                const row = document.createElement('tr');
+                row.className = 'bg-white border-b border-slate-100 hover:bg-green-50 transition-colors cursor-pointer';
+                row.onclick = () => editPaper(paper.id);
+
+                let linkDisplay = '';
+                
+                // Logic Tampilan Link Khusus Paper (Kembali ke multi-icon)
+                if (currentType === 'Paper' || currentType === 'Proposal') {
+                     linkDisplay = `
+                        <div class="flex gap-2 text-lg" onclick="event.stopPropagation()">
+                            ${paper.link_overleaf ? `<a href="${paper.link_overleaf}" target="_blank" class="text-green-600 hover:opacity-75" title="Overleaf"><i class="fa-solid fa-file-code"></i></a>` : '<span class="text-slate-200"><i class="fa-solid fa-file-code"></i></span>'}
+                            ${paper.link_referensi ? `<a href="${paper.link_referensi}" target="_blank" class="text-blue-500 hover:opacity-75" title="Referensi"><i class="fa-solid fa-book"></i></a>` : '<span class="text-slate-200"><i class="fa-solid fa-book"></i></span>'}
+                            ${paper.link_ppt ? `<a href="${paper.link_ppt}" target="_blank" class="text-orange-500 hover:opacity-75" title="PPT"><i class="fa-solid fa-file-powerpoint"></i></a>` : '<span class="text-slate-200"><i class="fa-solid fa-file-powerpoint"></i></span>'}
+                            ${paper.link_submission ? `<a href="${paper.link_submission}" target="_blank" class="text-purple-500 hover:opacity-75" title="Submission"><i class="fa-solid fa-upload"></i></a>` : '<span class="text-slate-200"><i class="fa-solid fa-upload"></i></span>'}
+                        </div>
+                    `;
+                } else {
+                    // Logic Tampilan untuk Referensi / Buku (Single Link/File)
+                    if (paper.link_referensi) {
+                        const isFile = paper.link_referensi.includes('supabase') && paper.link_referensi.includes('/storage/');
+                        if (isFile) {
+                             linkDisplay = `<a href="${paper.link_referensi}" target="_blank" onclick="event.stopPropagation()" class="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-xs font-medium"><i class="fa-solid fa-file-arrow-down mr-1"></i> Lihat File</a>`;
+                        } else {
+                             linkDisplay = `<a href="${paper.link_referensi}" target="_blank" onclick="event.stopPropagation()" class="text-blue-500 hover:underline"><i class="fa-solid fa-link mr-1"></i> Link</a>`;
+                        }
+                    } else if (paper.link_overleaf) {
+                        linkDisplay = `<a href="${paper.link_overleaf}" target="_blank" onclick="event.stopPropagation()" class="text-green-600 hover:underline"><i class="fa-solid fa-file-code mr-1"></i> Doc</a>`;
+                    } else {
+                        linkDisplay = '<span class="text-slate-300">-</span>';
+                    }
+                }
+
+                row.innerHTML = `
+                    <td class="px-4 py-4 font-mono text-xs text-slate-500 whitespace-nowrap">${formatDate(paper.deadline)}</td>
+                    <td class="px-4 py-4 text-slate-600 text-xs">${paper.penulis || '-'}</td>
+                    <td class="px-4 py-4 font-medium text-slate-900">
+                        ${paper.judul || 'Tanpa Judul'}
+                        <!-- Menampilkan Kategori dengan jelas di tabel -->
+                        <div class="text-xs text-green-600 font-normal mt-0.5 bg-green-50 inline-block px-1.5 py-0.5 rounded">${paper.kategori || 'Tanpa Kategori'}</div>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap">${getStatusBadge(paper.status)}</td>
+                    <td class="px-4 py-4 text-slate-600 text-xs font-medium">
+                        ${paper.target_jurnal ? `<span class="bg-slate-100 px-2 py-0.5 rounded border border-slate-200">${paper.target_jurnal}</span>` : '-'}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap relative z-10">${linkDisplay}</td>
+                    <td class="px-4 py-4 text-slate-600 text-xs font-mono">${paper.biaya || '-'}</td>
+                    <td class="px-4 py-4 text-slate-500 text-xs italic max-w-xs truncate" title="${paper.catatan || ''}">${paper.catatan || '-'}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-center relative z-10" onclick="event.stopPropagation()">
+                        <button onclick="editPaper(${paper.id})" class="text-blue-600 hover:text-blue-900 mx-1"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deletePaper(${paper.id})" class="text-red-400 hover:text-red-700 mx-1"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // --- 7. MODAL & UPLOAD LOGIC ---
+        function openModal(isEdit = false) {
+            modal.classList.remove('hidden');
+            
+            const typeLabels = { 'Buku': 'Judul Buku', 'Proposal': 'Judul Proposal', 'Referensi': 'Judul Referensi', 'Paper': 'Judul Paper' };
+            document.getElementById('labelJudul').textContent = (typeLabels[currentType] || 'Judul') + ' *';
+            document.getElementById('labelTarget').textContent = currentType === 'Buku' ? 'Penerbit' : (currentType === 'Referensi' ? 'Jenis Sumber (e.g. Jurnal/Web)' : 'Target Jurnal');
+            document.getElementById('labelKategori').textContent = currentType === 'Referensi' ? 'Kategori / Topik (e.g. Quantum)' : 'Kategori';
+
+            // --- Show/Hide Paper Links Section based on Type ---
+            if (currentType === 'Paper' || currentType === 'Proposal') {
+                paperLinksSection.classList.remove('hidden');
+            } else {
+                paperLinksSection.classList.add('hidden');
+            }
+
+            // --- UX: Custom Placeholder untuk Kategori Referensi ---
+            const kategoriInput = document.getElementById('kategori');
+            const targetInput = document.getElementById('target_jurnal');
+
+            if (currentType === 'Referensi') {
+                kategoriInput.placeholder = "e.g. Classical, Quantum Biology, Photonic";
+                targetInput.placeholder = "Pilih atau ketik (Buku/Jurnal)";
+            } else {
+                kategoriInput.placeholder = "e.g. Q2, Scopus";
+                targetInput.placeholder = "";
+            }
+
+            fileUpload.value = '';
+            filePreviewLink.classList.add('hidden');
+
+            if (!isEdit) {
+                document.getElementById('modalTitle').textContent = `Tambah ${currentType}`;
+                form.reset();
+                document.getElementById('paperId').value = '';
+                document.getElementById('jenisInput').value = currentType;
+                document.getElementById('status').value = 'Belum Diapapakan';
+                document.getElementById('existingFileUrl').value = '';
+            } else {
+                document.getElementById('modalTitle').textContent = `Edit ${currentType}`;
+            }
+        }
+
+        function closeModal() { modal.classList.add('hidden'); }
+
+        function editPaper(id) {
+            const paper = papers.find(p => p.id === id);
+            if (!paper) return;
+
+            document.getElementById('paperId').value = paper.id;
+            document.getElementById('jenisInput').value = paper.jenis || currentType;
+            document.getElementById('judul').value = paper.judul || '';
+            document.getElementById('deadline').value = paper.deadline || '';
+            document.getElementById('status').value = paper.status || 'Belum Diapapakan';
+            document.getElementById('target_jurnal').value = paper.target_jurnal || '';
+            document.getElementById('penulis').value = paper.penulis || '';
+            
+            document.getElementById('link_referensi').value = paper.link_referensi || '';
+            document.getElementById('existingFileUrl').value = paper.link_referensi || '';
+            
+            // Populate Extra Links for Paper
+            document.getElementById('link_overleaf').value = paper.link_overleaf || '';
+            document.getElementById('link_ppt').value = paper.link_ppt || '';
+            document.getElementById('link_submission').value = paper.link_submission || '';
+
+            if (paper.link_referensi && paper.link_referensi.includes('/storage/')) {
+                filePreviewLink.classList.remove('hidden');
+                filePreviewLink.querySelector('a').href = paper.link_referensi;
+            } else {
+                filePreviewLink.classList.add('hidden');
+            }
+
+            document.getElementById('biaya').value = paper.biaya || '';
+            document.getElementById('kategori').value = paper.kategori || '';
+            document.getElementById('catatan').value = paper.catatan || '';
+            
+            openModal(true);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const saveBtn = document.getElementById('saveBtn');
+            const originalText = saveBtn.innerText;
+            saveBtn.disabled = true;
+            
+            try {
+                const id = document.getElementById('paperId').value;
+                const fileInput = document.getElementById('fileUpload');
+                let finalFileUrl = document.getElementById('existingFileUrl').value;
+
+                if (fileInput.files.length > 0) {
+                    saveBtn.innerText = 'Mengupload File...';
+                    const file = fileInput.files[0];
+                    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+                    const fileName = `${Date.now()}_${sanitizedName}`;
+                    const { data, error: uploadError } = await db.storage.from(STORAGE_BUCKET).upload(fileName, file);
+                    if (uploadError) throw uploadError;
+                    const { data: publicUrlData } = db.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
+                    finalFileUrl = publicUrlData.publicUrl;
+                }
+                
+                if (fileInput.files.length === 0 && document.getElementById('link_referensi').value) {
+                    const manualLink = document.getElementById('link_referensi').value;
+                    if (!manualLink.includes('/storage/')) { finalFileUrl = manualLink; }
+                }
+
+                saveBtn.innerText = 'Menyimpan Data...';
+
+                const formData = {
+                    jenis: document.getElementById('jenisInput').value || currentType,
+                    judul: document.getElementById('judul').value,
+                    deadline: document.getElementById('deadline').value || null,
+                    status: document.getElementById('status').value,
+                    target_jurnal: document.getElementById('target_jurnal').value,
+                    penulis: document.getElementById('penulis').value,
+                    link_referensi: finalFileUrl, 
+                    biaya: document.getElementById('biaya').value,
+                    kategori: document.getElementById('kategori').value,
+                    catatan: document.getElementById('catatan').value,
+                    // Link tambahan
+                    link_overleaf: document.getElementById('link_overleaf').value || null,
+                    link_ppt: document.getElementById('link_ppt').value || null,
+                    link_submission: document.getElementById('link_submission').value || null,
+                };
+
+                let error;
+                if (id) {
+                    const res = await db.from('papers').update(formData).eq('id', id);
+                    error = res.error;
+                } else {
+                    const res = await db.from('papers').insert([formData]);
+                    error = res.error;
+                }
+                if (error) throw error;
+                closeModal();
+                showToast('Berhasil disimpan!');
+                fetchPapers();
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan: ' + (err.message || 'Cek console'));
+            } finally {
+                saveBtn.innerText = originalText;
+                saveBtn.disabled = false;
+            }
+        });
+
+        async function deletePaper(id) {
+            if(!confirm('Hapus data ini?')) return;
+            const { error } = await db.from('papers').delete().eq('id', id);
+            if (!error) { showToast('Terhapus'); fetchPapers(); }
+        }
+
+        // --- FILTER & SORT ---
+        function populateCategoryFilter() {
+            // Mengambil semua kategori unik dari data yang sedang ditampilkan (Paper/Buku/Referensi)
+            const categories = [...new Set(papers.map(p => p.kategori).filter(k => k && k.trim() !== ''))].sort();
+            categoryFilter.innerHTML = '<option value="all">Semua Kategori</option>';
+            categories.forEach(c => categoryFilter.innerHTML += `<option value="${c}">${c}</option>`);
+            
+            // Restore selection
+            categoryFilter.value = currentFilterCategory;
+            if (categoryFilter.value !== currentFilterCategory) { categoryFilter.value = 'all'; currentFilterCategory = 'all'; }
+        }
+
+        function populateTargetFilter() {
+            const targets = [...new Set(papers.map(p => p.target_jurnal).filter(t => t && t.trim() !== ''))].sort();
+            const defaultLabel = targetFilter.options[0].text;
+            targetFilter.innerHTML = `<option value="all">${defaultLabel}</option>`;
+            targets.forEach(t => targetFilter.innerHTML += `<option value="${t}">${t}</option>`);
+            
+            targetFilter.value = currentFilterTarget;
+            if (targetFilter.value !== currentFilterTarget) { targetFilter.value = 'all'; currentFilterTarget = 'all'; }
+        }
+
+        function applyFiltersAndSort() {
+            let result = [...papers];
+            if (currentSearchTerm) result = result.filter(p => (p.judul||'').toLowerCase().includes(currentSearchTerm) || (p.penulis||'').toLowerCase().includes(currentSearchTerm));
+            
+            if (currentFilterStatus !== 'all') result = result.filter(p => p.status === currentFilterStatus);
+            if (currentFilterCategory !== 'all') result = result.filter(p => p.kategori === currentFilterCategory);
+            if (currentFilterTarget !== 'all') result = result.filter(p => p.target_jurnal === currentFilterTarget);
+            
+            result.sort((a, b) => {
+                if (currentSortOption === 'deadline_asc') return (new Date(a.deadline||'9999-12-31') - new Date(b.deadline||'9999-12-31'));
+                if (currentSortOption === 'deadline_desc') return (new Date(b.deadline||'1970-01-01') - new Date(a.deadline||'1970-01-01'));
+                if (currentSortOption === 'title_asc') return (a.judul||'').localeCompare(b.judul||'');
+                return 0;
+            });
+            renderTable(result);
+        }
+
+        // Event Listeners
+        searchInput.addEventListener('input', (e) => { currentSearchTerm = e.target.value.toLowerCase(); applyFiltersAndSort(); });
+        statusFilter.addEventListener('change', (e) => { currentFilterStatus = e.target.value; applyFiltersAndSort(); });
+        categoryFilter.addEventListener('change', (e) => { currentFilterCategory = e.target.value; applyFiltersAndSort(); });
+        targetFilter.addEventListener('change', (e) => { currentFilterTarget = e.target.value; applyFiltersAndSort(); }); 
+        sortOption.addEventListener('change', (e) => { currentSortOption = e.target.value; applyFiltersAndSort(); });
+        function showToast(msg, type) { 
+            const t = document.getElementById('toast'); 
+            document.getElementById('toastMessage').innerText = msg; 
+            t.classList.remove('translate-y-20'); 
+            setTimeout(() => t.classList.add('translate-y-20'), 3000); 
+        }
+
+        // Init
+        switchType('Paper');
+    </script>
+</body>
+</html>
